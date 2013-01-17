@@ -5,12 +5,9 @@ require "selenium-webdriver"
 require 'pp'
 require 'mo_test_helpers/selenium_helper'
 
-@base_url = if ENV['URL'] then ENV['URL'] else 'http://localhost:3000/' end
-
 puts "Running with engine: #{MoTestHelpers.cucumber_engine}"
 puts "Running in CI: #{ENV['CI']}"
 puts "Running Headless: #{ENV['HEADLESS']}"
-puts "Running Tests on URL: #{@base_url}"
 
 # should we run headless? Careful, CI does this alone!
 if ENV['HEADLESS'] and not ENV['CI']
@@ -54,6 +51,7 @@ end
 
 # "before all"
 Before do
+  @base_url = if ENV['URL'] then ENV['URL'] else 'http://localhost:3000/' end
   if MoTestHelpers.cucumber_engine == :watir
     @browser = browser
     @browser.goto @base_url
