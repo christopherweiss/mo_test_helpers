@@ -5,13 +5,15 @@ require "selenium-webdriver"
 require 'pp'
 require 'mo_test_helpers/selenium_helper'
 
+@base_url = if ENV['URL'] then ENV['URL'] else 'http://localhost:3000/' end
+
 puts "Running with engine: #{MoTestHelpers.cucumber_engine}"
 puts "Running in CI: #{ENV['CI']}"
 puts "Running Headless: #{ENV['HEADLESS']}"
+puts "Running Tests on URL: #{@base_url}"
 
 # should we run headless? Careful, CI does this alone!
 if ENV['HEADLESS'] and not ENV['CI']
-  puts "Starting headless..."
   require 'headless'
   
   headless = Headless.new
@@ -27,11 +29,9 @@ MoTestHelpers::SeleniumHelper.validate_browser!
 # see if we are running on MO CI Server
 if ENV['CI'] and not ENV['SELENIUM_GRID_URL']
   puts "Running Cucumber in CI Mode."
-  
+
   if MoTestHelpers.cucumber_engine == :capybara
-    raise ArgumentError.new('Please give the URL to the Rails Server!') if ENV['URL'].blank?
-    
-    Capybara.app_host = ENV['URL']
+    Capybara.app_host = @base_url
     Capybara.register_driver :selenium do |app|
       MoTestHelpers::SeleniumHelper.grid_capybara_browser(app)
     end
@@ -55,19 +55,16 @@ end
 # "before all"
 Before do
   if MoTestHelpers.cucumber_engine == :watir
-    puts "Running Watir Browser."
-    
     @browser = browser
-    raise ArgumentError.new('Please give the URL to the Rails Server!') if ENV['URL'].blank?
-    @base_url = ENV['URL']
-    @browser.goto ENV['URL']
+    @browser.goto @base_url
   end
 end
 
 # "after all"
 at_exit do
   if @browser
-    puts "Closing Watir browser."
-    @browser.close unless ENV["STAY_OPEN"]
+     unless ENV['STAY_OPEN']
+       @browser.close
+     end
   end
 end
